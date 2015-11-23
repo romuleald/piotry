@@ -10,7 +10,7 @@ var T = new Twit(options.keys);
 
 var screen_name = '';
 process.argv.forEach(function (val, index) {
-    if(index === 2){
+    if (index === 2) {
         screen_name = val;
     }
 });
@@ -52,8 +52,8 @@ var displayError = function (err) {
 };
 
 /**
-diff = array
-*/
+ diff = array
+ */
 var getDiffUsers = function (diff) {
     T.get('users/lookup', {user_id: diff}, function (err, data_follower) {
         if (err) {
@@ -77,19 +77,21 @@ var getFollowers = function (screen_name) {
             displayError(err);
             return;
         }
-        console.log('vous avez ' + new_follower.ids.length + ' followers');
         fs.readFile(screen_name + 'followers.json', {encoding: 'utf8'}, function (err, old_followers) {
             var _old_followers = [];
             if (err) {
+                console.log('vous avez ' + new_follower.ids.length + ' followers');
                 console.info('it\'s our first time here? *wink* *wink*');
             }
             else {
                 _old_followers = eval(old_followers);
+                console.log('vous avez ' + new_follower.ids.length + ' followers et en aviez ' + _old_followers.length);
                 var diff = _.difference(_old_followers, new_follower.ids);
                 var lost_followers = (new_follower.ids.length - _old_followers.length);
 
                 //display losted follower
-                lost_followers > 0 && console.log(screen_name + ' a perdu ' + lost_followers + ' followers');
+                var wonOrLost = lost_followers > 0  ? ' a gagné ' : ' a perdu ';
+                console.log(screen_name + wonOrLost + Math.abs(lost_followers) + ' followers');
                 if (diff.length) {
                     getDiffUsers(diff);
                 }
@@ -102,7 +104,20 @@ var getFollowers = function (screen_name) {
         });
     });
 };
-getFollowers(screen_name);
+
+var getRateLimit = function () {
+    T.get('application/rate_limit_status', {ressources: 'help,users,search,statuses'}, function (ok, response) {
+        console.dir(response.resources)
+    });
+};
+
+
+if (screen_name === 'rate_limit') {
+    getRateLimit();
+}
+else {
+    getFollowers(screen_name);
+}
 
 //TODO translate screen_name in id to manage the change os @screen_name
 //TODO do not write file in case of error
