@@ -3,7 +3,6 @@ var Twit = require('twit');
 var _ = require('underscore');
 var options = require('./config');
 
-
 var toString = Object.prototype.toString;
 
 var T = new Twit(options.keys);
@@ -55,19 +54,47 @@ var displayError = function (err) {
  diff = array
  */
 var getDiffUsers = function (diff) {
-    T.get('users/lookup', {user_id: diff}, function (err, data_follower) {
-        if (err) {
-            displayError(err);
-        }
-        else {
-            for (var i = 0; data_follower[i]; i++) {
-                var twitter_user = data_follower[i];
-                console.info(twitter_user.name + ' (' + twitter_user.screen_name + ')');
+    if (diff.length) {
+        T.get('users/lookup', {user_id: diff}, function (err, data_follower) {
+            if (err) {
+                displayError(err);
             }
-        }
-    });
+            else {
+                for (var i = 0; data_follower[i]; i++) {
+                    var twitter_user = data_follower[i];
+                    console.info(twitter_user.name + ' (' + twitter_user.screen_name + ')');
+                }
+            }
+        });
+    }
 };
 
+
+var compareOldFollowers = function (screen_name, new_follower) {
+    new_follower = new_follower.ids;
+    fs.readFile(screen_name + 'followers.json', {encoding: 'utf8'}, function (err, old_followers) {
+        var _old_followers = [];
+        if (err) {
+            console.log(screen_name + ' a ' + new_follower.length + ' followers');
+            console.info('it\'s our first time here? *wink* *wink*');
+            fs.writeFile('@' + screen_name, '');
+        }
+        else {
+            _old_followers = eval(old_followers);
+            var diffLostFollowers = _.difference(_old_followers, new_follower);
+            var diffGainFollowers = _.difference(new_follower, _old_followers);
+            var diffFollowers = (new_follower.length - _old_followers.length);
+
+            var wonOrLost = diffFollowers > 0 ? ' a gagné ' : ' a perdu ';
+            console.log('vous avez ' + new_follower.length + ' followers et en aviez ' + _old_followers.length);
+            console.log(screen_name + wonOrLost + Math.abs(diffFollowers) + ' followers');
+            getDiffUsers(diffLostFollowers);
+            getDiffUsers(diffGainFollowers);
+        }
+        fs.writeFile(screen_name + 'followers.json', dump_array(new_follower));
+    });
+
+};
 var getFollowers = function (screen_name) {
     if (screen_name[0] === '@') {
         screen_name = screen_name.substr(1);
@@ -77,31 +104,7 @@ var getFollowers = function (screen_name) {
             displayError(err);
             return;
         }
-        fs.readFile(screen_name + 'followers.json', {encoding: 'utf8'}, function (err, old_followers) {
-            var _old_followers = [];
-            if (err) {
-                console.log('vous avez ' + new_follower.ids.length + ' followers');
-                console.info('it\'s our first time here? *wink* *wink*');
-            }
-            else {
-                _old_followers = eval(old_followers);
-                console.log('vous avez ' + new_follower.ids.length + ' followers et en aviez ' + _old_followers.length);
-                var diff = _.difference(_old_followers, new_follower.ids);
-                var lost_followers = (new_follower.ids.length - _old_followers.length);
-
-                //display losted follower
-                var wonOrLost = lost_followers > 0  ? ' a gagné ' : ' a perdu ';
-                console.log(screen_name + wonOrLost + Math.abs(lost_followers) + ' followers');
-                if (diff.length) {
-                    getDiffUsers(diff);
-                }
-            }
-
-            fs.writeFile(screen_name + 'oldfollowers.json', _old_followers, function () {
-                fs.writeFile(screen_name + 'followers.json', dump_array(new_follower.ids));
-            });
-            fs.writeFile('@' + screen_name, '');
-        });
+        compareOldFollowers(screen_name, new_follower);
     });
 };
 

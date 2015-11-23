@@ -1,8 +1,18 @@
 {
-  "name": "application-name",
+  "name": "twitter-unfollow",
   "version": "0.0.1",
   "devDependencies": {
+    "twit": "^2.1.1",
+    "underscore": "^1.8.3"
+  },
+  "main": "test.js",
+  "dependencies": {
     "twit": "^2.1.0",
     "underscore": "^1.8.3"
-  }
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "description": ""
 }
