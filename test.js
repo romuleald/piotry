@@ -53,16 +53,16 @@ var displayError = function (err) {
 /**
  diff = array
  */
-var getDiffUsers = function (diff) {
+var getDiffUsers = function (diff, status) {
     if (diff.length) {
         T.get('users/lookup', {user_id: diff}, function (err, data_follower) {
             if (err) {
-                displayError(err);
+                displayError(err, diff, arguments);
             }
             else {
                 for (var i = 0; data_follower[i]; i++) {
                     var twitter_user = data_follower[i];
-                    console.info(twitter_user.name + ' (' + twitter_user.screen_name + ')');
+                    console.info(status, twitter_user.name + ' (' + twitter_user.screen_name + ')');
                 }
             }
         });
@@ -88,8 +88,8 @@ var compareOldFollowers = function (screen_name, new_follower) {
             var wonOrLost = diffFollowers > 0 ? ' a gagné ' : ' a perdu ';
             console.log('vous avez ' + new_follower.length + ' followers et en aviez ' + _old_followers.length);
             console.log(screen_name + wonOrLost + Math.abs(diffFollowers) + ' followers');
-            getDiffUsers(diffLostFollowers);
-            getDiffUsers(diffGainFollowers);
+            getDiffUsers(diffLostFollowers, '--');
+            getDiffUsers(diffGainFollowers, '++');
         }
         fs.writeFile(screen_name + 'followers.json', dump_array(new_follower));
     });
